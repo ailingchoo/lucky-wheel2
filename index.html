@@ -1,0 +1,178 @@
+!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>幸运转盘(限抽一次)</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 20px;
+        }
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            transform: rotate(0deg);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        }
+        .wheel-slice {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            left: 0;
+            top: 0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            padding-top: 20px;
+        }
+        .pointer {
+            width: 20px;
+            height: 40px;
+            background: #ff4444;
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            clip-path: polygon(0 0, 100% 50%, 0 100%);
+            z-index: 2;
+        }
+        button {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .usage-count {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>幸运大转盘(限抽一次)</h1>
+    <div class="wheel-container">
+        <div class="wheel" id="wheel">
+            <!-- 转盘扇区将通过JS动态生成 -->
+        </div>
+        <div class="pointer"></div>
+    </div>
+    <button id="spinButton" onclick="spin()">开始抽奖</button>
+    <div class="usage-count" id="usageCount">剩余抽奖次数：1次</div>
+    <div class="result" id="result"></div>
+
+    <script>
+        const items = [
+            { text: "奖项1", color: "#FF6B6B" },
+            { text: "奖项2", color: "#4ECDC4" },
+            { text: "奖项3", color: "#45B7D1" },
+            { text: "奖项4", color: "#96CEB4" },
+            { text: "奖项5", color: "#FFEEAD" },
+            { text: "奖项6", color: "#D4A5A5" }
+        ];
+
+        const wheel = document.getElementById('wheel');
+        const spinButton = document.getElementById('spinButton');
+        const resultDisplay = document.getElementById('result');
+        const usageCountDisplay = document.getElementById('usageCount');
+        
+        let remainingSpins = 1; // 设置只能使用一次
+        let canSpin = true;
+        let currentRotation = 0;
+
+        // 创建转盘扇区
+        items.forEach((item, index) => {
+            const slice = document.createElement('div');
+            slice.className = 'wheel-slice';
+            slice.style.backgroundColor = item.color;
+            slice.style.transform = rotate(${index * (360 / items.length)}deg);
+            slice.innerHTML = <span>${item.text}</span>;
+            wheel.appendChild(slice);
+        });
+
+        // 检查是否已经抽奖过
+        if(localStorage.getItem('hasSpun')) {
+            remainingSpins = 0;
+            spinButton.disabled = true;
+            usageCountDisplay.textContent = "您已经抽奖过了";
+        }
+
+        function spin() {
+if (!canSpin || remainingSpins <= 0) return;
+            
+            canSpin = false;
+            spinButton.disabled = true;
+            resultDisplay.textContent = '';
+
+            // 随机选择停止角度
+            const extraSpins = 5;
+            const baseAngle = Math.random() * 360;
+            const totalRotation = (extraSpins * 360) + baseAngle;
+
+            // 设置新的旋转角度
+            currentRotation += totalRotation;
+            wheel.style.transform = rotate(${currentRotation}deg);
+
+            // 计算结果
+            setTimeout(() => {
+                const finalAngle = currentRotation % 360;
+                const sliceAngle = 360 / items.length;
+                const resultIndex = Math.floor((360 - (finalAngle % 360)) / sliceAngle);
+                const result = items[resultIndex % items.length];
+                
+                resultDisplay.textContent = 恭喜您抽中：${result.text}！;
+                remainingSpins--;
+                
+                // 保存抽奖记录
+                localStorage.setItem('hasSpun', 'true');
+                
+                if(remainingSpins <= 0) {
+                    usageCountDisplay.textContent = "您已经抽奖过了";
+                    spinButton.disabled = true;
+                } else {
+                    usageCountDisplay.textContent = 剩余抽奖次数：${remainingSpins}次;
+                    spinButton.disabled = false;
+                    canSpin = true;
+                }
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
